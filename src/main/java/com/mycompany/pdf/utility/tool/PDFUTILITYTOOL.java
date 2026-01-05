@@ -31,20 +31,29 @@ public class PDFUTILITYTOOL {
 //        String ad=s.nextLine();
 //        String add=s.nextLine();
 //        s.close();
-        List<File> files=new ArrayList<File>();
+//        List<File> files=new ArrayList<File>();
         
-        for(int i=0; i<5;i++)
-        {
-            String add=s.nextLine();
-            File file= new File(add);
-            files.add(file);
-        }
-        MergeService.MergePDFs(files, "Merged");
-        files=null;
-        s.close();
+//        for(int i=0; i<5;i++)
+//        {
+//            String add=s.nextLine();
+//            File file= new File(add);
+//            files.add(file);
+//        }
+//        MergeService.MergePDFs(files, "Merged");
+//        files=null;
+//        s.close();
+        File pdfFile= new File("C:\\Users\\swast\\Downloads\\exp7.pdf");
+//        MergeService.MergeTWOPDFS(ad, add, "MERGED");
+//        SplitService.SplitIntoPages(pdfFile);
+//        SplitService.SplitPDFAtPage(pdfFile, 2);
+//        SplitService.SplitFromTo(pdfFile, 2, 4);
+
+//        SplitService.ExtractOddPages(pdfFile);
+//        SplitService.ExtractEvenPages(pdfFile);
+        int[] pgs={1,5,2};
+          SplitService.ExtractPages(pdfFile,pgs );
         
             
-//        MergeService.MergeTWOPDFS(ad, add, "MERGED");
 //        System.out.println("Hello World!");
 //        try(PDDocument document = new PDDocument())
 //        {

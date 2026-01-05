@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class MergeService {
     
-    private static String desktopAddress=System.getProperty("user.home") + File.separator + "Desktop"+ File.separator;
+    private static String desktopAddress=System.getProperty("user.home") + File.separator + "Desktop";
     
     public static void MergeTWOPDFS(File pdf1, File pdf2,String outputName) throws IOException
     {
@@ -32,7 +32,7 @@ public class MergeService {
         merger.addSource(pdf1);
         merger.addSource(pdf2);
         
-        merger.setDestinationFileName(desktopAddress + outputName +".pdf");
+        merger.setDestinationFileName(desktopAddress +File.separator + outputName +".pdf");
         merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
         
 //            System.out.println("Files Not Found: "+e.getMessage());
@@ -65,7 +65,7 @@ public class MergeService {
             merger.addSource(file);
         }
         
-        merger.setDestinationFileName(desktopAddress + outputName +".pdf");
+        merger.setDestinationFileName(desktopAddress +File.separator + outputName +".pdf");
         merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
         
     }
