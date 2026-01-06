@@ -10,7 +10,7 @@ import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
+///import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import java.util.Scanner;
 /**
@@ -42,7 +42,8 @@ public class PDFUTILITYTOOL {
 //        MergeService.MergePDFs(files, "Merged");
 //        files=null;
 //        s.close();
-        File pdfFile= new File("C:\\Users\\swast\\Downloads\\exp7.pdf");
+//        File pdfFile= new File("C:\\Users\\swast\\Downloads\\sample.pdf");
+        File pdfFile= new File("C:\\Users\\swast\\Downloads\\Vigneshwar Holidays Winter Season - Final.pdf");
 //        MergeService.MergeTWOPDFS(ad, add, "MERGED");
 //        SplitService.SplitIntoPages(pdfFile);
 //        SplitService.SplitPDFAtPage(pdfFile, 2);
@@ -50,9 +51,13 @@ public class PDFUTILITYTOOL {
 
 //        SplitService.ExtractOddPages(pdfFile);
 //        SplitService.ExtractEvenPages(pdfFile);
-        int[] pgs={1,5,2};
-          SplitService.ExtractPages(pdfFile,pgs );
-        
+//        int[] pgs={1,5,2};
+//          SplitService.ExtractPages(pdfFile,pgs );
+
+
+//        CleanUpService.RemoveBlankPages(pdfFile);
+        CompressService.CompressPDF(pdfFile,false);
+//        CompressService
             
 //        System.out.println("Hello World!");
 //        try(PDDocument document = new PDDocument())

@@ -5,7 +5,7 @@
 package com.mycompany.pdf.utility.tool;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
+//import org.apache.pdfbox.pdmodel.PDPage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -65,7 +65,7 @@ public class SplitService {
             splitter.setSplitAtPage(index);
             
             List<PDDocument> pdfs = splitter.split(doc);
-            System.out.println(pdfs.size());
+//            System.out.println(pdfs.size());
             
             Path directoryPath = Paths.get(desktopAddress, pdfFile.getName()+"_Splitted");
             if (Files.notExists(directoryPath)) 
