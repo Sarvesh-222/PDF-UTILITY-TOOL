@@ -9,6 +9,9 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import java.awt.image.BufferedImage;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -20,9 +23,12 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 
-//import org.apache.pdfbox.pdmodel.graphics.xobject.PDImageXObject;
+//import org.apache.pdfbox.pdmodel.graphics.PDImageXObject;
 
 /**
  *
@@ -30,8 +36,11 @@ import org.apache.pdfbox.cos.COSName;
  */
 public class CleanUpService {
     
+    private static String desktopAddress=System.getProperty("user.home") + File.separator + "Desktop";
+    
     public static void RemoveBlankPages(File pdfFile)
     {
+        PDDocument newDoc =new PDDocument();
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
 //            PDPageTree pages = doc.getPages();
@@ -44,21 +53,27 @@ public class CleanUpService {
                 stripper.setEndPage(i);
                 
                 String pageText = stripper.getText(doc);
-                System.out.println("\nPage "+(i)+ " :\n" +pageText );
                 
-                if(pageText.trim().isBlank())
+                if(pageText.trim().isBlank() && !pageHasVisualContent(doc , i))
                 {
                     System.out.println("EMPTY PAGE "+ i);
+                }else
+                {
+                    newDoc.importPage(doc.getPage(i-1));
                 }
                 
                 
             }
             
-            for (int i = 1; i <= totalPages; i++) {
-           
-            System.out.println("Page " + (i) + ": " + pageHasVisualContent(doc , i));
-           
+            Path directoryPath = Paths.get(desktopAddress,"BlankPagesRemovedPDFS");
+            if (Files.notExists(directoryPath)) 
+            {
+                Files.createDirectory(directoryPath);
             }
+            
+            newDoc.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_NoBlankPages" +".pdf").toFile());
+            newDoc.close();
+            
         }catch(IOException e)
         {
             System.out.println("Exception from CleanUpService.RemoveBlankPages: "+ e.getMessage());
@@ -68,22 +83,22 @@ public class CleanUpService {
     
     public static boolean pageHasVisualContent(PDDocument doc, int pageIndex)
     {
-        PDFRenderer renderer = new PDFRenderer(doc);
         try{
-            BufferedImage image = renderer.renderImageWithDPI(pageIndex-1, 72);
-
-            // Check for any non-white pixel
-            for (int x = 0; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    if ((image.getRGB(x, y) & 0xFFFFFF) != 0xFFFFFF) {
-                        return true;
-                    }
+              PDPage page = doc.getPage(pageIndex-1);
+              PDResources resources = page.getResources();
+//              System.out.println(resources.getXObjectNames());
+              for(COSName name : resources.getXObjectNames())
+              {
+                PDXObject xObject = resources.getXObject(name);
+                if(xObject instanceof PDImageXObject)
+                {
+                    return true;
                 }
-            }
-            
-        }catch(IOException e)
+                
+              }
+        }catch(IOException ex)
         {
-            
+            System.getLogger(ContentExtractionService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
         return false;
     }
