@@ -13,6 +13,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 ///import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import java.util.Scanner;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 /**
  *
  * @author swast
@@ -42,8 +43,8 @@ public class PDFUTILITYTOOL {
 //        MergeService.MergePDFs(files, "Merged");
 //        files=null;
 //        s.close();
-//        File pdfFile= new File("C:\\Users\\swast\\Downloads\\sample.pdf");
-        File pdfFile= new File("C:\\Users\\swast\\Downloads\\Vigneshwar Holidays Winter Season - Final.pdf");
+        File pdfFile= new File("C:\\Users\\swast\\Downloads\\sample.pdf");
+//        File pdfFile= new File("C:\\Users\\swast\\Downloads\\Vigneshwar Holidays Winter Season - Final.pdf");
 //        MergeService.MergeTWOPDFS(ad, add, "MERGED");
 //        SplitService.SplitIntoPages(pdfFile);
 //        SplitService.SplitPDFAtPage(pdfFile, 2);
@@ -55,9 +56,15 @@ public class PDFUTILITYTOOL {
 //          SplitService.ExtractPages(pdfFile,pgs );
 
 
-//        CleanUpService.RemoveBlankPages(pdfFile);
-        CompressService.CompressPDF(pdfFile,false);
+        CleanUpService.RemoveBlankPages(pdfFile);
+//        CompressService.CompressPDF(pdfFile,false);
 //        CompressService
+        
+//        ContentExtractionService.ExtractImages(pdfFile);
+//        float margin = 50;
+//        float yStart = page.getMediaBox().getHeight() - margin;
+//        float width = page.getMediaBox().getWidth() - 2 * margin;
+//        ContentExtractionService.ExtractTextPageWise(pdfFile,PDType1Font.HELVETICA,12,margin);
             
 //        System.out.println("Hello World!");
 //        try(PDDocument document = new PDDocument())

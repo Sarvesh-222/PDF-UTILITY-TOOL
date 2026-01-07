@@ -77,9 +77,9 @@ public class CompressService {
             }
             
             doc.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_Compressed" +".pdf").toFile());
-        }catch(IOException e)
+        }catch(IOException ex)
         {
-            
+            System.getLogger(ContentExtractionService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
         
         

@@ -16,8 +16,8 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
  */
 
 public class TextWriter {
-    static int leadingAmount=14;
-    public static boolean writeText(PDDocument document,PDPage page,String text, PDFont font, float fontSize,float margin,float y,float maxWidth) throws IOException
+    private static int leadingAmount=14;
+    public static boolean writeText(PDDocument document,PDPage page,String text, PDFont font, float fontSize,float margin,float yStart,float maxWidth) throws IOException
     {
         List<String> lines = TextWrapper.wrapText(text,font, fontSize, maxWidth);
             try(PDPageContentStream content = new PDPageContentStream(document,page))
@@ -26,7 +26,7 @@ public class TextWriter {
                 content.beginText();
                 content.setFont(font,fontSize);
                 content.setLeading(leadingAmount);
-                content.newLineAtOffset(margin, y);
+                content.newLineAtOffset(margin, yStart);
                 
                 for(String line : lines)
                 {
@@ -42,6 +42,11 @@ public class TextWriter {
             }
     }
     
+    /**
+     * Sets the Spacing Between Line
+     * Default Value = 14
+     * @param amt New Line Spacing
+     */
     public static void SetLeadingAmount(int amt)
     {
         TextWriter.leadingAmount=amt;
