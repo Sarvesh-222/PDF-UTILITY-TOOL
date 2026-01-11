@@ -21,6 +21,16 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javafx.embed.swing.SwingFXUtils;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
+import javafx.stage.FileChooser;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+
 public class PDFUTILITYTOOL extends Application {
 
     private Stage mainStage;
@@ -45,8 +55,15 @@ public class PDFUTILITYTOOL extends Application {
         title.setFont(Font.font("Arial", 28));
         title.setStyle("-fx-font-weight: bold;");
 
-        StackPane mergeCard = createCard("Merge PDF", "Combine multiple PDFs", Color.web("#ff4d4d"), "merge.png",
-                () -> mainScene.setRoot(createFeaturePage("Merge PDF")));
+//        StackPane mergeCard = createCard("Merge PDF", "Combine multiple PDFs", Color.web("#ff4d4d"), "merge.png",
+//                () -> mainScene.setRoot(createFeaturePage("Merge PDF")));
+        StackPane mergeCard = createCard(
+        "Merge PDF",
+        "Combine multiple PDFs",
+        Color.web("#ff4d4d"),
+        "merge.png",
+        () -> mainScene.setRoot(createMergeWorkspace())
+        );
         StackPane splitCard = createCard("Split PDF", "Split PDFs into parts", Color.web("#ff9933"), "split.png",
                 () -> mainScene.setRoot(createFeaturePage("Split PDF")));
         StackPane compressCard = createCard("Compress PDF", "Reduce PDF size", Color.web("#33cc33"), "compress.png",
@@ -121,6 +138,8 @@ public class PDFUTILITYTOOL extends Application {
     root.setAlignment(Pos.CENTER);
     root.setPadding(new Insets(40));
     root.setStyle("-fx-background-color: #f2f2f2;");
+    options = null;
+    optionsCards = null;
 
     return root;
 }
@@ -135,8 +154,8 @@ public class PDFUTILITYTOOL extends Application {
         Label desc = new Label("This is a placeholder page for " + optionName);
         desc.setFont(Font.font("Arial", 18));
 
-        Button backBtn = new Button("← Back");
-        backBtn.setOnAction(e -> mainScene.setRoot(createFeaturePage(optionName.split(" ")[0]))); // Back to feature page
+        Button backBtn = new Button("← MainPage");
+        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage())); // Back to feature page
 
         VBox root = new VBox(30, title, desc, backBtn);
         root.setAlignment(Pos.CENTER);
@@ -184,6 +203,175 @@ public class PDFUTILITYTOOL extends Application {
     private String toRgbString(Color c) {
         return String.format("rgb(%d, %d, %d)", (int)(c.getRed() * 255), (int)(c.getGreen() * 255), (int)(c.getBlue() * 255));
     }
+    
+    
+   private StackPane createPdfPreviewCard(Image preview, int pageCount, File sourceFile, FlowPane parent) {
+
+        ImageView iv = new ImageView(preview);
+        iv.setFitWidth(140);
+        iv.setPreserveRatio(true);
+
+        Label pages = new Label(pageCount + " pages");
+        pages.setFont(Font.font(14));
+        pages.setTextFill(Color.WHITE);
+
+        VBox content = new VBox(10, iv, pages);
+        content.setAlignment(Pos.CENTER);
+
+        // Delete button
+        Button deleteBtn = new Button("✕");
+        deleteBtn.setStyle("""
+            -fx-background-color: transparent;
+            -fx-text-fill: white;
+            -fx-font-size: 14;
+            -fx-cursor: hand;
+        """);
+
+        StackPane.setAlignment(deleteBtn, Pos.TOP_RIGHT);
+        StackPane.setMargin(deleteBtn, new Insets(5));
+
+        StackPane card = new StackPane(content, deleteBtn);
+        card.setPrefSize(180, 220);
+        card.setStyle("""
+            -fx-background-color: #333;
+            -fx-background-radius: 15;
+        """);
+
+        card.setEffect(new DropShadow(10, Color.gray(0.4)));
+
+        // Delete behavior
+        deleteBtn.setOnAction(e -> {
+            parent.getChildren().remove(card);
+            mergePdfFiles.remove(sourceFile);
+        });
+
+        return card;
+    }
+
+    
+    private Image renderFirstPage(PDDocument doc) throws Exception {
+
+        PDFRenderer renderer = new PDFRenderer(doc);
+        BufferedImage img = renderer.renderImageWithDPI(0, 120);
+
+        return SwingFXUtils.toFXImage(img, null);
+    }
+    
+    private void openPdfChooser(FlowPane pdfContainer) {
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Select PDF");
+        fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PDF Files", "*.pdf")
+        );
+
+        File file = fc.showOpenDialog(mainStage);
+        if (file == null) return;
+        mergePdfFiles.add(file);
+
+        try (PDDocument doc = PDDocument.load(file)) {
+
+            int pageCount = doc.getNumberOfPages();
+            Image preview = renderFirstPage(doc);
+
+            StackPane card = createPdfPreviewCard(preview, pageCount, file, pdfContainer);
+            pdfContainer.getChildren().add(card);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    private StackPane createAddPdfButton(FlowPane pdfContainer) {
+
+        Label plus = new Label("+");
+        plus.setFont(Font.font(30));
+        plus.setTextFill(Color.WHITE);
+
+        StackPane button = new StackPane(plus);
+        button.setPrefSize(50, 50);
+        button.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-background-radius: 25;
+            -fx-cursor: hand;
+        """);
+
+        button.setEffect(new DropShadow(10, Color.gray(0.3)));
+
+        button.setOnMouseClicked(e -> openPdfChooser(pdfContainer));
+
+        return button;
+    }
+    
+    private final List<File> mergePdfFiles = new ArrayList<>();
+    private VBox createMergeWorkspace() {
+//        List<File> mergePdfFiles = new ArrayList<>();
+
+        Label title = new Label("Merge PDF");
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER_LEFT);
+        pdfContainer.setPadding(new Insets(20));
+
+        StackPane addButton = createAddPdfButton(pdfContainer);
+
+        BorderPane topBar = new BorderPane();
+        topBar.setLeft(title);
+        topBar.setRight(addButton);
+
+        Button backBtn = new Button("← Back");
+        backBtn.setOnAction(e -> {
+            mergePdfFiles.clear();
+            mainScene.setRoot(createHomePage());
+        });
+
+        Button mergeBtn = new Button("Merge PDFs");
+        mergeBtn.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-text-fill: white;
+            -fx-font-size: 16;
+            -fx-font-weight: bold;
+            -fx-padding: 10 25;
+        """);
+
+        mergeBtn.setOnAction(e -> {
+                    try {
+                        MergeService.MergePDFs(mergePdfFiles, "MP");
+                    } catch (IOException ex) {
+                        System.getLogger(PDFUTILITYTOOL.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    }
+                });
+
+        Button clearBtn = new Button("Clear All");
+        clearBtn.setStyle("""
+            -fx-background-color: #777;
+            -fx-text-fill: white;
+            -fx-font-size: 14;
+            -fx-padding: 8 20;
+        """);
+
+        clearBtn.setOnAction(e -> {
+            mergePdfFiles.clear();
+            pdfContainer.getChildren().clear();
+        });
+
+        VBox actionButtons = new VBox(10, mergeBtn, clearBtn, backBtn);
+        actionButtons.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox bottomBar = new HBox(20, actionButtons);
+        bottomBar.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox root = new VBox(20, topBar, pdfContainer, bottomBar);
+        root.setPadding(new Insets(30));
+        root.setStyle("-fx-background-color: #f2f2f2;");
+        
+
+        return root;
+}
+    
+
 
     public static void main(String[] args) {
         launch(args);
