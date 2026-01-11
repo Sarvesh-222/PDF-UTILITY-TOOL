@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 /**
  *
@@ -67,6 +69,13 @@ public class MergeService {
         
         merger.setDestinationFileName(desktopAddress +File.separator + outputName +".pdf");
         merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+        
+        // SUCCESS POPUP
+        Alert successAlert = new Alert(AlertType.INFORMATION);
+        successAlert.setTitle("Merge Complete");
+        successAlert.setHeaderText(null);
+        successAlert.setContentText("Merged PDF successfully created at:\n" + desktopAddress +File.separator+ outputName +".pdf");
+        successAlert.showAndWait();
         
     }
 }
