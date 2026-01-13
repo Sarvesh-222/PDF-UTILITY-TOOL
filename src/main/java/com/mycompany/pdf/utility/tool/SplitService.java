@@ -19,12 +19,38 @@ import java.nio.file.Paths;
 public class SplitService {
     private static String desktopAddress=System.getProperty("user.home") + File.separator + "Desktop";
     
+    
+    
+    public static void SplitPagesViaOptions(File pdfFile, int opt) 
+    {
+        switch(opt)
+        {
+            case 0:
+                SplitIntoPages(pdfFile);
+                break;
+            case 1:
+                ExtractFirstPage(pdfFile);
+                break;
+            case 2:
+                ExtractLastPage(pdfFile);
+                break;
+            case 3:
+                ExtractEvenPages(pdfFile);
+                break;
+            case 4:
+                ExtractOddPages(pdfFile);
+                break;
+            default:
+                
+        }
+    }
+    
     /**
      * Splits the Given PDF Into Pages and saves the result on the Desktop.
      * 
      * @param pdfFile    Input PDF file
      */
-    public static void SplitIntoPages(File pdfFile)
+    private static void SplitIntoPages(File pdfFile)
     {
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
@@ -121,7 +147,7 @@ public class SplitService {
      * Extracts all the odd number Pages from Given PDF saves the result on the Desktop.
      * @param pdfFile    Input PDF file
      */
-    public static void ExtractOddPages(File pdfFile)
+    private static void ExtractOddPages(File pdfFile)
     {
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
@@ -152,7 +178,7 @@ public class SplitService {
      * Extracts all the even number Pages from Given PDF saves the result on the Desktop.
      * @param pdfFile    Input PDF file
      */
-    public static void ExtractEvenPages(File pdfFile)
+    private static void ExtractEvenPages(File pdfFile)
     {
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
@@ -224,7 +250,7 @@ public class SplitService {
      * Extracts the very FIRST Page Of Given PDF saves the result on the Desktop.
      * @param pdfFile    Input PDF file
      */
-    public static void ExtractFirstPage(File pdfFile)
+    private static void ExtractFirstPage(File pdfFile)
     {
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
@@ -251,7 +277,7 @@ public class SplitService {
      * Extracts the very LAST Page Of Given PDF saves the result on the Desktop.
      * @param pdfFile    Input PDF file
      */
-    public static void ExtractLastPage(File pdfFile)
+    private static void ExtractLastPage(File pdfFile)
     {
         try(PDDocument doc = PDDocument.load(pdfFile))
         {
