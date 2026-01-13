@@ -6,3 +6,4 @@ com\mycompany\pdf\utility\tool\CleanUpService.class
 com\mycompany\pdf\utility\tool\TextWrapper.class
 com\mycompany\pdf\utility\tool\PDFUTILITYTOOL.class
 com\mycompany\pdf\utility\tool\ContentExtractionService.class
+com\mycompany\pdf\utility\tool\PDFUTILITYTOOL$SplitMode.class
