@@ -25,6 +25,7 @@ import javafx.embed.swing.SwingFXUtils;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -43,6 +44,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class PDFUTILITYTOOL extends Application {
@@ -64,6 +66,7 @@ public class PDFUTILITYTOOL extends Application {
     private boolean isMergePage =false;
     private boolean isSplitIntoPagesPage =false;
     private boolean isSplitAtPagesPage =false;
+    private boolean isSplitByRangePage =false;
 
     @Override
     public void start(Stage stage) {
@@ -84,6 +87,7 @@ public class PDFUTILITYTOOL extends Application {
         isMergePage=false;
         isSplitIntoPagesPage = false;
         isSplitAtPagesPage = false;
+        isSplitByRangePage=false;
         Label title = new Label("I Heart PDF Too :)");
         title.setFont(Font.font("Arial", 28));
         title.setStyle("-fx-font-weight: bold;");
@@ -99,10 +103,13 @@ public class PDFUTILITYTOOL extends Application {
         );
         StackPane splitCard = createCard("Split PDF", "Split PDFs into parts", Color.web("#ff9933"), "split.png",
                 () -> mainScene.setRoot(createFeaturePage("Split PDF")));
+       
         StackPane compressCard = createCard("Compress PDF", "Reduce PDF size", Color.web("#33cc33"), "compress.png",
-                () -> mainScene.setRoot(createFeaturePage("Compress PDF")));
+                () -> mainScene.setRoot(createCompressWorkspace()));
+        
         StackPane extractCard = createCard("Extract", "Extract contents", Color.web("#3399ff"), "convert.png",
                 () -> mainScene.setRoot(createFeaturePage("Extract PDF")));
+       
         StackPane cleanupCard = createCard("Clean Up", "Remove unwanted contents", Color.web("#ff66cc"), "convert.png",
                 () -> mainScene.setRoot(createFeaturePage("Clean Up PDF")));
 
@@ -127,22 +134,16 @@ public class PDFUTILITYTOOL extends Application {
     List<Node> optionsCards = new ArrayList<>();
 
     switch(featureName) {
-        case "Merge PDF":
-            options.add("Merge Two PDFs");
-            options.add("Merge Multiple PDFs");
-            break;
+
         case "Split PDF":
             options.add("Split PDF Into Pages");
             options.add("Split PDF At A Page");
             options.add("Split PDF By Range");
             break;
-        case "Compress PDF":
-            options.add("Normal Compression\n(Color)");
-            options.add("Heavy Compression\n(Black & White)");
-            break;
+        
         case "Extract PDF":
-            options.add("Extract Images");
             options.add("Extract Text");
+            options.add("Extract Images");
             break;
         case "Clean Up PDF":
             options.add("Remove Blank\nPages");
@@ -167,7 +168,17 @@ public class PDFUTILITYTOOL extends Application {
                 break;
             case "Split PDF By Range":
                 optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
-                () -> mainScene.setRoot(createFinalPage(optionName)));
+                () -> mainScene.setRoot(createSplitByRangeWorkspace()));
+//                optionsCards.add(optionN);
+                break;
+            case "Extract Text":
+                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                () -> mainScene.setRoot(createExtractTextWorkspace()));
+//                optionsCards.add(optionN);
+                break;
+            case "Extract Images":
+                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                () -> mainScene.setRoot(createSplitByRangeWorkspace()));
 //                optionsCards.add(optionN);
                 break;
                 
@@ -290,7 +301,7 @@ public class PDFUTILITYTOOL extends Application {
         StackPane card = new StackPane(content, deleteBtn);
         card.setPrefSize(180, 220);
         card.setStyle("""
-            -fx-background-color: #333;
+            -fx-background-color: #f2f2f2;
             -fx-background-radius: 15;
         """);
 
@@ -301,7 +312,7 @@ public class PDFUTILITYTOOL extends Application {
             parent.getChildren().remove(card);
             addedPdfFiles.remove(sourceFile);
             if(isMergePage) updateMergeButtonState();
-            if(isSplitIntoPagesPage || isSplitAtPagesPage) updateSplitIntoPagesButtonState();
+            if(isSplitIntoPagesPage || isSplitAtPagesPage || isSplitByRangePage) UpdateSplitPDFButtonState();
         });
 
         return card;
@@ -329,7 +340,7 @@ public class PDFUTILITYTOOL extends Application {
         addedPdfFiles.add(file);
 //        System.out.println(isSplitIntoPagesPage);
         if(isMergePage)updateMergeButtonState();
-        if(isSplitIntoPagesPage || isSplitAtPagesPage)updateSplitIntoPagesButtonState();
+        if(isSplitIntoPagesPage || isSplitAtPagesPage || isSplitByRangePage)UpdateSplitPDFButtonState();
 
         try (PDDocument doc = PDDocument.load(file)) {
 
@@ -431,7 +442,7 @@ public class PDFUTILITYTOOL extends Application {
     VBox topSection = new VBox(10, topBar);
 
     // ---------- Right Controls ----------
-    VBox rightControls = createRightSideControls(pdfContainer, outputField);
+    VBox rightControls = createMergePDFRightSideControls(pdfContainer, outputField);
     rightControls.setAlignment(Pos.BOTTOM_CENTER);
 
     // ---------- Right Sidebar ----------
@@ -452,7 +463,7 @@ public class PDFUTILITYTOOL extends Application {
     rightSidebar.getChildren().addAll(
         addButton,    // top
         spacer,       // stretches vertically
-        createRightSideControls(pdfContainer, outputField) // bottom
+createMergePDFRightSideControls(pdfContainer, outputField) // bottom
     );
 
     // ---------- Main Split ----------
@@ -615,7 +626,182 @@ public class PDFUTILITYTOOL extends Application {
         });
     }
     
-    private VBox createRightSideControls(FlowPane pdfContainer, TextField outputField) {
+    private BorderPane createSplitByRangeWorkspace() {
+
+        isSplitByRangePage=true;
+        // ---------- Title ----------
+        Label title = new Label("Split PDF by Range");
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        BorderPane topBar = new BorderPane();
+        topBar.setCenter(title);
+        topBar.setPadding(new Insets(10));
+        topBar.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-border-color: #dddddd;
+            -fx-border-width: 0 0 1 0;
+        """);
+
+        // ---------- PDF Container ----------
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER);
+        pdfContainer.setPadding(new Insets(20));
+
+        ScrollPane scrollPane = new ScrollPane(pdfContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        // ---------- Add Button ----------
+        StackPane addButton = createAddPdfButton(pdfContainer);
+
+        pdfContainer.getChildren().addListener(
+            (javafx.collections.ListChangeListener<Node>) c -> {
+                boolean disable = pdfContainer.getChildren().size() >= 1;
+                addButton.setDisable(disable);
+                addButton.setOpacity(disable ? 0.5 : 1.0);
+            }
+        );
+
+        // ---------- Right Sidebar ----------
+        VBox rightPanel = createSplitByRangeRightPanel(pdfContainer);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(20, addButton, spacer, rightPanel);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(300);
+        sidebar.setAlignment(Pos.TOP_CENTER);
+        sidebar.setStyle("""
+            -fx-background-color: #eaeaea;
+            -fx-border-color: #ccc;
+            -fx-border-width: 0 0 0 1;
+        """);
+
+        // ---------- Layout ----------
+        HBox center = new HBox(scrollPane, sidebar);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+        BorderPane root = new BorderPane();
+        root.setTop(topBar);
+        root.setCenter(center);
+        root.setStyle("-fx-background-color: #f2f2f2;");
+
+        return root;
+    }
+    
+    private VBox createSplitByRangeRightPanel(FlowPane pdfContainer) {
+
+        Label sectionTitle = new Label("Split Options");
+        sectionTitle.setFont(Font.font(16));
+        sectionTitle.setStyle("-fx-font-weight: bold;");
+
+        // ---------- Toggle ----------
+        CheckBox customRangeCheck = new CheckBox("Custom Range");
+
+        // ---------- Fixed Range ----------
+        Label fixedLabel = new Label("Split into page ranges of:");
+        TextField fixedField = new TextField();
+        fixedField.setPromptText("e.g. 5");
+        fixedField.setMaxWidth(120);
+
+        // ---------- Custom Range ----------
+        Label fromLabel = new Label("From Page:");
+        TextField fromField = new TextField();
+        fromField.setPromptText("e.g. 1");
+        fromField.setMaxWidth(100);
+
+        Label toLabel = new Label("To Page:");
+        TextField toField = new TextField();
+        toField.setPromptText("e.g. 10");
+        toField.setMaxWidth(100);
+
+        // Numeric-only enforcement
+        enforceNumeric(fixedField);
+        enforceNumeric(fromField);
+        enforceNumeric(toField);
+
+        // ---------- Visibility Control ----------
+        fixedLabel.managedProperty().bind(customRangeCheck.selectedProperty().not());
+        fixedField.managedProperty().bind(customRangeCheck.selectedProperty().not());
+        fixedLabel.visibleProperty().bind(customRangeCheck.selectedProperty().not());
+        fixedField.visibleProperty().bind(customRangeCheck.selectedProperty().not());
+
+        fromLabel.managedProperty().bind(customRangeCheck.selectedProperty());
+        fromField.managedProperty().bind(customRangeCheck.selectedProperty());
+        toLabel.managedProperty().bind(customRangeCheck.selectedProperty());
+        toField.managedProperty().bind(customRangeCheck.selectedProperty());
+
+        fromLabel.visibleProperty().bind(customRangeCheck.selectedProperty());
+        fromField.visibleProperty().bind(customRangeCheck.selectedProperty());
+        toLabel.visibleProperty().bind(customRangeCheck.selectedProperty());
+        toField.visibleProperty().bind(customRangeCheck.selectedProperty());
+
+        // ---------- Split Button ----------
+        splitBtn = new Button("Split PDF");
+        splitBtn.setDisable(true);
+        splitBtn.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-text-fill: white;
+            -fx-font-size: 15;
+            -fx-font-weight: bold;
+            -fx-padding: 10 20;
+        """);
+
+        // Enable logic
+        Runnable updateState = () -> {
+            boolean hasPdf = !pdfContainer.getChildren().isEmpty();
+            boolean valid;
+
+            if (customRangeCheck.isSelected()) {
+                valid = !fromField.getText().isBlank() && !toField.getText().isBlank();
+            } else {
+                valid = !fixedField.getText().isBlank();
+            }
+
+            splitBtn.setDisable(!(hasPdf && valid));
+        };
+
+        fixedField.textProperty().addListener((a,b,c)->updateState.run());
+        fromField.textProperty().addListener((a,b,c)->updateState.run());
+        toField.textProperty().addListener((a,b,c)->updateState.run());
+        customRangeCheck.selectedProperty().addListener((a,b,c)->updateState.run());
+
+        splitBtn.setOnAction(e ->{
+            
+            if(customRangeCheck.isSelected())
+            {
+                SplitService.SplitFromTo(addedPdfFiles.getFirst(), Integer.parseInt(fromField.getText())  ,Integer.parseInt(toField.getText()) );
+            }else
+            {
+                SplitService.SplitPDFAtPage(addedPdfFiles.getFirst(), Integer.parseInt(fixedField.getText()));
+            }
+        });
+
+        Button backBtn = new Button("← Back");
+        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+        VBox box = new VBox(12,
+            sectionTitle,
+            customRangeCheck,
+            fixedLabel,
+            fixedField,
+            fromLabel,
+            fromField,
+            toLabel,
+            toField,
+            splitBtn,
+            backBtn
+        );
+
+        box.setAlignment(Pos.BOTTOM_LEFT);
+        return box;
+    }
+
+
+    
+    private VBox createMergePDFRightSideControls(FlowPane pdfContainer, TextField outputField) {
         Button backBtn = new Button("← Back");
     backBtn.setOnAction(e -> {
         addedPdfFiles.clear();
@@ -800,16 +986,344 @@ public class PDFUTILITYTOOL extends Application {
 
         return box;
     }
+    
+    private BorderPane createCompressWorkspace() {
+
+        // ---------- Title ----------
+        Label title = new Label("Compress PDF");
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        BorderPane topBar = new BorderPane();
+        topBar.setCenter(title);
+        topBar.setPadding(new Insets(10));
+        topBar.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-border-color: #dddddd;
+            -fx-border-width: 0 0 1 0;
+        """);
+
+        // ---------- PDF Container ----------
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER);
+        pdfContainer.setPadding(new Insets(20));
+
+        ScrollPane scrollPane = new ScrollPane(pdfContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        // ---------- Add Button ----------
+        StackPane addButton = createAddPdfButton(pdfContainer);
+
+
+
+        // ---------- Right Sidebar ----------
+        VBox rightSidebar = createCompressRightSidebar(pdfContainer);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(20, addButton, spacer, rightSidebar);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(280);
+        sidebar.setAlignment(Pos.TOP_CENTER);
+        sidebar.setStyle("""
+            -fx-background-color: #eaeaea;
+            -fx-border-color: #ccc;
+            -fx-border-width: 0 0 0 1;
+        """);
+
+        // ---------- Center Content ----------
+        HBox centerContent = new HBox(scrollPane, sidebar);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+        BorderPane root = new BorderPane();
+        root.setTop(topBar);
+        root.setCenter(centerContent);
+        root.setStyle("-fx-background-color: #f2f2f2;");
+
+        return root;
+    }
+    
+    private VBox createCompressRightSidebar(FlowPane pdfContainer) {
+
+    Label sectionTitle = new Label("Compression Options");
+    sectionTitle.setFont(Font.font(16));
+    sectionTitle.setStyle("-fx-font-weight: bold;");
+
+    CheckBox heavyCompression = new CheckBox("Heavy Compression (Black & White)");
+    heavyCompression.setWrapText(true);
+
+    Label tip = new Label(
+        "Tip: Heavy compression converts the PDF to black and white and reduces file size significantly."
+    );
+    tip.setWrapText(true);
+    tip.setStyle("""
+        -fx-font-size: 11;
+        -fx-text-fill: #555;
+    """);
+
+    Button compressBtn = new Button("Compress PDF");
+    compressBtn.setDisable(true);
+    compressBtn.setStyle("""
+        -fx-background-color: #ff4d4d;
+        -fx-text-fill: white;
+        -fx-font-size: 15;
+        -fx-font-weight: bold;
+        -fx-padding: 10 20;
+    """);
+
+    // Enable only when at least one PDF is added
+    compressBtn.disableProperty().bind(
+        javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
+    );
+
+    compressBtn.setOnAction(e -> {
+        boolean isHeavy = heavyCompression.isSelected();
+
+        // Placeholder for compression logic
+        System.out.println(
+            isHeavy
+                ? "Heavy compression selected (B/W)"
+                : "Normal compression selected"
+        );
+        
+        if(addedPdfFiles.size()>1)
+        {
+            for(File pdf : addedPdfFiles)
+            {
+                CompressService.CompressPDF(pdf, isHeavy);
+            }
+        }else
+        {
+            CompressService.CompressPDF(addedPdfFiles.getFirst(), isHeavy);
+        }
+
+        // CompressService.compress(addedPdfFiles.getFirst(), isHeavy);
+    });
+    
+    Button clearBtn = new Button("Clear All");
+    clearBtn.setStyle("""
+        -fx-background-color: #777;
+        -fx-text-fill: white;
+        -fx-padding: 8 20;
+    """);
+
+    clearBtn.setOnAction(e -> {
+        addedPdfFiles.clear();
+        pdfContainer.getChildren().clear();
+    });
+
+    Button backBtn = new Button("← Back");
+    backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+    VBox box = new VBox(
+        12,
+        sectionTitle,
+        heavyCompression,
+        tip,
+        compressBtn,
+        clearBtn,
+        backBtn
+    );
+
+    box.setAlignment(Pos.BOTTOM_LEFT);
+
+    return box;
+}
+
+    
+    private BorderPane createExtractTextWorkspace() {
+
+    // ---------- Title ----------
+    Label title = new Label("Extract Text");
+    title.setFont(Font.font("Arial", 28));
+    title.setStyle("-fx-font-weight: bold;");
+
+    BorderPane topBar = new BorderPane();
+    topBar.setCenter(title);
+    topBar.setPadding(new Insets(10));
+    topBar.setStyle("""
+        -fx-background-color: #ffffff;
+        -fx-border-color: #dddddd;
+        -fx-border-width: 0 0 1 0;
+    """);
+
+    // ---------- PDF Cards ----------
+    FlowPane pdfContainer = new FlowPane(20, 20);
+    pdfContainer.setAlignment(Pos.CENTER);
+    pdfContainer.setPadding(new Insets(20));
+
+    ScrollPane scrollPane = new ScrollPane(pdfContainer);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+    // ---------- Add Button (NO LOCKING) ----------
+    StackPane addButton = createAddPdfButton(pdfContainer);
+     // Disable add button once a PDF is added
+        pdfContainer.getChildren().addListener(
+            (javafx.collections.ListChangeListener<Node>) c -> {
+                boolean disable = pdfContainer.getChildren().size() >= 1;
+                addButton.setDisable(disable);
+                addButton.setOpacity(disable ? 0.5 : 1.0);
+            }
+        );
+
+    // ---------- Right Controls ----------
+    VBox rightControls = createExtractTextRightSidebar(pdfContainer);
+
+    Region spacer = new Region();
+    VBox.setVgrow(spacer, Priority.ALWAYS);
+
+    // ---------- Right Sidebar ----------
+    VBox sidebar = new VBox(20, addButton, spacer, rightControls);
+    sidebar.setPadding(new Insets(20));
+    sidebar.setPrefWidth(280);
+    sidebar.setAlignment(Pos.TOP_CENTER);
+    sidebar.setStyle("""
+        -fx-background-color: #eaeaea;
+        -fx-border-color: #ccc;
+        -fx-border-width: 0 0 0 1;
+    """);
+
+    // ---------- Center Content ----------
+    HBox centerContent = new HBox(scrollPane, sidebar);
+    HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+    // ---------- Root ----------
+    BorderPane root = new BorderPane();
+    root.setTop(topBar);
+    root.setCenter(centerContent);
+    root.setStyle("-fx-background-color: #f2f2f2;");
+
+    return root;
+}
+
+    
+    private VBox createExtractTextRightSidebar(FlowPane pdfContainer) {
+
+        Label sectionTitle = new Label("Extract Options");
+        sectionTitle.setFont(Font.font(16));
+        sectionTitle.setStyle("-fx-font-weight: bold;");
+
+        CheckBox extractToMultipleFile = new CheckBox("Extract to multiple file");
+        extractToMultipleFile.setWrapText(true);
+
+        // ---------- Output Format (Radio Buttons) ----------
+        Label formatLabel = new Label("Output Format:");
+        formatLabel.setFont(Font.font(13));
+        formatLabel.setStyle("-fx-font-weight: bold;");
+
+        RadioButton pdfRadio = new RadioButton("PDF");
+        RadioButton txtRadio = new RadioButton("TXT");
+
+        ToggleGroup formatGroup = new ToggleGroup();
+        pdfRadio.setToggleGroup(formatGroup);
+        txtRadio.setToggleGroup(formatGroup);
+
+        txtRadio.setSelected(true); // sensible default
+
+        VBox formatBox = new VBox(6, formatLabel, pdfRadio, txtRadio);
+        formatBox.setPadding(new Insets(0, 0, 0, 10));
+
+        // Hidden by default
+        formatBox.setVisible(false);
+        formatBox.setManaged(false);
+
+        // Show only when "Extract to single file" is checked
+        extractToMultipleFile.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            formatBox.setVisible(isSelected);
+            formatBox.setManaged(isSelected);
+        });
+
+        Label tip = new Label(
+            "Tip: Extracted text will be saved on your Desktop."
+        );
+        tip.setWrapText(true);
+        tip.setStyle("""
+            -fx-font-size: 11;
+            -fx-text-fill: #555;
+        """);
+
+        Button extractBtn = new Button("Extract Text");
+        extractBtn.setDisable(true);
+        extractBtn.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-text-fill: white;
+            -fx-font-size: 15;
+            -fx-font-weight: bold;
+            -fx-padding: 10 20;
+        """);
+
+        // Enable when at least one PDF exists
+        extractBtn.disableProperty().bind(
+            javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
+        );
+
+        extractBtn.setOnAction(e -> {
+            boolean multipleFiles = extractToMultipleFile.isSelected();
+            String outputFormat = "PDF";
+
+            if (multipleFiles && formatGroup.getSelectedToggle() != null) {
+                outputFormat = ((RadioButton) formatGroup.getSelectedToggle()).getText();
+            }
+
+            // Placeholder
+            System.out.println(
+                "Extract Text | multipleFiles=" + multipleFiles + " | format=" + outputFormat
+            );
+            ContentExtractionService.ExtractTextPageWise(addedPdfFiles.getFirst(), PDType1Font.HELVETICA, 12, 50, multipleFiles, outputFormat.toLowerCase());
+
+        });
+        
+
+        Button backBtn = new Button("← Back");
+        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+        VBox box = new VBox(
+            12,
+            sectionTitle,
+            extractToMultipleFile,
+            formatBox,
+            tip,
+            extractBtn,
+            backBtn
+        );
+
+//        box.setPadding(new Insets(20));
+//        box.setPrefWidth(220);
+//        box.setAlignment(Pos.BOTTOM_LEFT);
+//        box.setStyle("""
+//            -fx-background-color: #eaeaea;
+//            -fx-border-color: #ccc;
+//
+//        """);
+
+        return box;
+    }
+
+
+
+
 
 
     
     
+    private void enforceNumeric(TextField field) {
+        field.textProperty().addListener((obs, old, val) -> {
+            if (!val.matches("\\d*")) {
+                field.setText(val.replaceAll("[^\\d]", ""));
+            }
+        });
+    }
+
     
     private void updateMergeButtonState() {
      mergeBtn.setDisable(addedPdfFiles.size() < 2);
     }
     
-    private void updateSplitIntoPagesButtonState() {
+    private void UpdateSplitPDFButtonState() {
      splitBtn.setDisable(addedPdfFiles.size() != 1 );
     }
 
