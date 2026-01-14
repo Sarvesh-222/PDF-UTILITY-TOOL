@@ -165,54 +165,137 @@ public class ContentExtractionService {
         }
     }
     
-    
-    public static void ExtractTextPageWise(File pdfFile, PDFont font, float fontSize, float margin)
-    {
-        PDDocument textPDF = new PDDocument();
-        
-        try(PDDocument doc = PDDocument.load(pdfFile))
+        public static void ExtractTextPageWise(
+            File pdfFile,
+            PDFont font,
+            float fontSize,
+            float margin,
+            boolean saveInMultipleFiles,
+            String format) // "pdf" or "txt", only used when saveInMultipleFiles=true
         {
+        try (PDDocument doc = PDDocument.load(pdfFile)) {
+
             int totalPages = doc.getNumberOfPages();
             PDFTextStripper stripper = new PDFTextStripper();
-            
-            for(int i =1; i <= totalPages; i++)
-            {
-                stripper.setStartPage(i);
-                stripper.setEndPage(i);
-                
-                String pageText = stripper.getText(doc);
-                pageText = pageText.trim();
-                
-                if(pageText.trim().isBlank())
-                {
-//                    System.out.println("EMPTY PAGE "+ i);
-                    continue;
-                }
 
-                
-                PDPage newPage = new PDPage();
-                textPDF.addPage(newPage);
-                
-                float yStart = newPage.getMediaBox().getHeight() - margin;
-                float maxWidth = newPage.getMediaBox().getWidth() - 2 * margin;
-                
-                TextWriter.writeText(textPDF, newPage, pageText, font, fontSize, margin, yStart, maxWidth);       
-            }
-            
-            Path directoryPath = Paths.get(desktopAddress,"ExtractedTextPDFS");
-            if (Files.notExists(directoryPath)) 
-            {
+            // Directory to save results
+            Path directoryPath = Paths.get(desktopAddress, "ExtractedTextPDFS");
+            if (Files.notExists(directoryPath)) {
                 Files.createDirectory(directoryPath);
             }
-            
-            textPDF.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_ExtractedText(PageWise)" +".pdf").toFile());
-            textPDF.close();
-        }
-        catch(IOException ex)
-        {
-            System.getLogger(ContentExtractionService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+
+            if (!saveInMultipleFiles) {
+                // ---------------- Single File ----------------
+                PDDocument textPDF = new PDDocument();
+
+                for (int i = 1; i <= totalPages; i++) {
+                    stripper.setStartPage(i);
+                    stripper.setEndPage(i);
+                    String pageText = stripper.getText(doc).trim();
+                    if (pageText.isBlank()) continue;
+
+                    PDPage newPage = new PDPage();
+                    textPDF.addPage(newPage);
+
+                    float yStart = newPage.getMediaBox().getHeight() - margin;
+                    float maxWidth = newPage.getMediaBox().getWidth() - 2 * margin;
+
+                    TextWriter.writeText(textPDF, newPage, pageText, font, fontSize, margin, yStart, maxWidth);
+                }
+
+                Path outPath = Paths.get(directoryPath.toString(),
+                        pdfFile.getName() + "_ExtractedText(PageWise).pdf");
+                textPDF.save(outPath.toFile());
+                textPDF.close();
+
+            } else {
+                // ---------------- Multiple Files ----------------
+                for (int i = 1; i <= totalPages; i++) {
+                    stripper.setStartPage(i);
+                    stripper.setEndPage(i);
+                    String pageText = stripper.getText(doc).trim();
+                    if (pageText.isBlank()) continue;
+
+                    if (format.equalsIgnoreCase("txt")) {
+                        // Save each page as TXT
+//                        Path textDirectortPath = Paths.get(directoryPath.toString(),pdfFile.getName()+"_TXT");
+                        Path outPath = Paths.get(directoryPath.toString(),
+                                pdfFile.getName() + "_Page" + i + ".txt");
+                        Files.writeString(outPath, pageText);
+
+                    } else {
+                        // Save each page as PDF
+                        PDDocument singlePDF = new PDDocument();
+                        PDPage newPage = new PDPage();
+                        singlePDF.addPage(newPage);
+
+                        float yStart = newPage.getMediaBox().getHeight() - margin;
+                        float maxWidth = newPage.getMediaBox().getWidth() - 2 * margin;
+
+                        TextWriter.writeText(singlePDF, newPage, pageText, font, fontSize, margin, yStart, maxWidth);
+
+                        Path outPath = Paths.get(directoryPath.toString(),
+                                pdfFile.getName() + "_Page" + i + ".pdf");
+                        singlePDF.save(outPath.toFile());
+                        singlePDF.close();
+                    }
+                }
+            }
+
+        } catch (IOException ex) {
+            System.getLogger(ContentExtractionService.class.getName())
+                    .log(System.Logger.Level.ERROR, (String) null, ex);
         }
     }
+
+    
+//    public static void ExtractTextPageWise(File pdfFile, PDFont font, float fontSize, float margin, boolean saveInMultipleFiles)
+//    {
+//        PDDocument textPDF = new PDDocument();
+//        
+//        try(PDDocument doc = PDDocument.load(pdfFile))
+//        {
+//            int totalPages = doc.getNumberOfPages();
+//            PDFTextStripper stripper = new PDFTextStripper();
+//            
+//            for(int i =1; i <= totalPages; i++)
+//            {
+//                stripper.setStartPage(i);
+//                stripper.setEndPage(i);
+//                
+//                String pageText = stripper.getText(doc);
+//                pageText = pageText.trim();
+//                
+//                if(pageText.trim().isBlank())
+//                {
+////                    System.out.println("EMPTY PAGE "+ i);
+//                    continue;
+//                }
+//
+//                
+//                PDPage newPage = new PDPage();
+//                textPDF.addPage(newPage);
+//                
+//                float yStart = newPage.getMediaBox().getHeight() - margin;
+//                float maxWidth = newPage.getMediaBox().getWidth() - 2 * margin;
+//                
+//                TextWriter.writeText(textPDF, newPage, pageText, font, fontSize, margin, yStart, maxWidth);       
+//            }
+//            
+//            Path directoryPath = Paths.get(desktopAddress,"ExtractedTextPDFS");
+//            if (Files.notExists(directoryPath)) 
+//            {
+//                Files.createDirectory(directoryPath);
+//            }
+//            
+//            textPDF.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_ExtractedText(PageWise)" +".pdf").toFile());
+//            textPDF.close();
+//        }
+//        catch(IOException ex)
+//        {
+//            System.getLogger(ContentExtractionService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+//        }
+//    }
 }
 
 
