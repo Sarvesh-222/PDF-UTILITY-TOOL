@@ -178,7 +178,7 @@ public class PDFUTILITYTOOL extends Application {
                 break;
             case "Extract Images":
                 optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
-                () -> mainScene.setRoot(createSplitByRangeWorkspace()));
+                () -> mainScene.setRoot(createExtractImagesWorkspace()));
 //                optionsCards.add(optionN);
                 break;
                 
@@ -1291,18 +1291,253 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
             backBtn
         );
 
-//        box.setPadding(new Insets(20));
-//        box.setPrefWidth(220);
-//        box.setAlignment(Pos.BOTTOM_LEFT);
-//        box.setStyle("""
-//            -fx-background-color: #eaeaea;
-//            -fx-border-color: #ccc;
-//
-//        """);
-
         return box;
     }
 
+    private BorderPane createExtractImagesWorkspace() {
+
+        // ---------- Title ----------
+        Label title = new Label("Extract Images");
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        BorderPane topBar = new BorderPane();
+        topBar.setCenter(title);
+        topBar.setPadding(new Insets(10));
+        topBar.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-border-color: #dddddd;
+            -fx-border-width: 0 0 1 0;
+        """);
+
+        // ---------- PDF Cards ----------
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER);
+        pdfContainer.setPadding(new Insets(20));
+
+        ScrollPane scrollPane = new ScrollPane(pdfContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // ---------- Add Button ----------
+        StackPane addButton = createAddPdfButton(pdfContainer);
+
+        // Disable add button after one PDF
+        pdfContainer.getChildren().addListener(
+            (javafx.collections.ListChangeListener<Node>) c -> {
+                boolean disable = pdfContainer.getChildren().size() >= 1;
+                addButton.setDisable(disable);
+                addButton.setOpacity(disable ? 0.5 : 1.0);
+            }
+        );
+
+        // ---------- Right Sidebar ----------
+        VBox rightControls = createExtractImagesRightSidebar(pdfContainer);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(20, addButton, spacer, rightControls);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(280);
+        sidebar.setAlignment(Pos.TOP_CENTER);
+        sidebar.setStyle("""
+            -fx-background-color: #eaeaea;
+            -fx-border-color: #ccc;
+            -fx-border-width: 0 0 0 1;
+        """);
+
+        // ---------- Center Content ----------
+        HBox centerContent = new HBox(scrollPane, sidebar);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+        // ---------- Root ----------
+        BorderPane root = new BorderPane();
+        root.setTop(topBar);
+        root.setCenter(centerContent);
+        root.setStyle("-fx-background-color: #f2f2f2;");
+
+        return root;
+    }
+    
+    private VBox createExtractImagesRightSidebar(FlowPane pdfContainer) {
+
+    Label sectionTitle = new Label("Extract Options");
+    sectionTitle.setFont(Font.font(16));
+    sectionTitle.setStyle("-fx-font-weight: bold;");
+
+    /* =====================================================
+       SAVE MODE OPTIONS
+       ===================================================== */
+
+    Label saveAsLabel = new Label("Save Images As:");
+    saveAsLabel.setFont(Font.font(13));
+    saveAsLabel.setStyle("-fx-font-weight: bold;");
+
+    RadioButton saveAsPdf = new RadioButton("PDF");
+    RadioButton saveAsImages = new RadioButton("Image Files");
+
+    ToggleGroup saveModeGroup = new ToggleGroup();
+    saveAsPdf.setToggleGroup(saveModeGroup);
+    saveAsImages.setToggleGroup(saveModeGroup);
+
+    saveAsImages.setSelected(true); // sensible default
+
+    VBox saveModeBox = new VBox(6, saveAsLabel, saveAsPdf, saveAsImages);
+    saveModeBox.setPadding(new Insets(0, 0, 0, 10));
+
+    /* =====================================================
+       PDF IMAGE TYPE OPTIONS (PNG / JPEG)
+       ===================================================== */
+
+    Label pdfTypeLabel = new Label("Images inside PDF:");
+    pdfTypeLabel.setFont(Font.font(13));
+    pdfTypeLabel.setStyle("-fx-font-weight: bold;");
+
+    RadioButton pdfPng = new RadioButton("PNG");
+    RadioButton pdfJpeg = new RadioButton("JPEG");
+    pdfPng.setUserData(0);
+    pdfJpeg.setUserData(1);
+
+    ToggleGroup pdfTypeGroup = new ToggleGroup();
+    pdfPng.setToggleGroup(pdfTypeGroup);
+    pdfJpeg.setToggleGroup(pdfTypeGroup);
+
+    pdfPng.setSelected(true);
+
+    VBox pdfTypeBox = new VBox(6, pdfTypeLabel, pdfPng, pdfJpeg);
+    pdfTypeBox.setPadding(new Insets(0, 0, 0, 25));
+
+    // Hidden by default
+    pdfTypeBox.setVisible(false);
+    pdfTypeBox.setManaged(false);
+
+    /* =====================================================
+       IMAGE FILE TYPE OPTIONS (PNG / JPG)
+       ===================================================== */
+
+    Label imageTypeLabel = new Label("Image File Type:");
+    imageTypeLabel.setFont(Font.font(13));
+    imageTypeLabel.setStyle("-fx-font-weight: bold;");
+
+    RadioButton imgPng = new RadioButton("PNG");
+    RadioButton imgJpeg = new RadioButton("JPEG");
+    imgPng.setUserData(0);
+    imgJpeg.setUserData(1);
+
+    ToggleGroup imageTypeGroup = new ToggleGroup();
+    imgPng.setToggleGroup(imageTypeGroup);
+    imgJpeg.setToggleGroup(imageTypeGroup);
+
+    imgPng.setSelected(true);
+
+    VBox imageTypeBox = new VBox(6, imageTypeLabel, imgPng, imgJpeg);
+    imageTypeBox.setPadding(new Insets(0, 0, 0, 25));
+
+    /* =====================================================
+       VISIBILITY LOGIC
+       ===================================================== */
+
+    saveModeGroup.selectedToggleProperty().addListener((obs, old, selected) -> {
+        boolean pdfSelected = selected == saveAsPdf;
+
+        pdfTypeBox.setVisible(pdfSelected);
+        pdfTypeBox.setManaged(pdfSelected);
+
+        imageTypeBox.setVisible(!pdfSelected);
+        imageTypeBox.setManaged(!pdfSelected);
+    });
+
+    /* =====================================================
+       TIP
+       ===================================================== */
+
+    Label tip = new Label(
+        "Tip: Extracted images will be saved on your Desktop."
+    );
+    tip.setWrapText(true);
+    tip.setStyle("""
+        -fx-font-size: 11;
+        -fx-text-fill: #555;
+    """);
+
+    /* =====================================================
+       EXTRACT BUTTON
+       ===================================================== */
+
+    Button extractBtn = new Button("Extract Images");
+    extractBtn.setDisable(true);
+    extractBtn.setStyle("""
+        -fx-background-color: #ff4d4d;
+        -fx-text-fill: white;
+        -fx-font-size: 15;
+        -fx-font-weight: bold;
+        -fx-padding: 10 20;
+    """);
+
+    extractBtn.disableProperty().bind(
+        javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
+    );
+
+    extractBtn.setOnAction(e -> {
+
+        boolean saveAsPdfSelected = saveAsPdf.isSelected();
+
+        Integer imageType;
+        if (saveAsPdfSelected) {
+            
+            imageType = (Integer)(pdfTypeGroup.getSelectedToggle()).getUserData();
+        } else {
+            
+            imageType = (Integer)(imageTypeGroup.getSelectedToggle()).getUserData();
+        }
+
+        System.out.println(
+            "Extract Images | saveAsPdf=" + saveAsPdfSelected +
+            " | imageType=" + imageType
+        );
+        
+        File pdfFile = addedPdfFiles.getFirst();
+        List<BufferedImage> imgs =  ContentExtractionService.ExtractImages(pdfFile);
+        
+        if(saveAsPdfSelected)
+        {
+            ContentExtractionService.MakeImagePDF(getFileNameWithoutExtension(pdfFile), imgs, imageType);
+        }else
+        {
+            ContentExtractionService.SaveImages(getFileNameWithoutExtension(pdfFile), imgs, imageType);
+        }
+
+        // Example future calls:
+        // ImageExtractionService.extractToPdf(pdfFile, imageType);
+        // ImageExtractionService.extractAsImages(pdfFile, imageType);
+    });
+
+    /* =====================================================
+       BACK BUTTON
+       ===================================================== */
+
+    Button backBtn = new Button("← Back");
+    backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+    return new VBox(
+        12,
+        sectionTitle,
+        saveModeBox,
+        pdfTypeBox,
+        imageTypeBox,
+        tip,
+        extractBtn,
+        backBtn
+    );
+}
+
+    public static String getFileNameWithoutExtension(File file) {
+        String name = file.getName();
+        int lastDot = name.lastIndexOf('.');
+        return (lastDot == -1) ? name : name.substring(0, lastDot);
+    }
 
 
 

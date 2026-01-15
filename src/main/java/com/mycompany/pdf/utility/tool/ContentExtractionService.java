@@ -80,7 +80,7 @@ public class ContentExtractionService {
      * @param images     List of BufferedImage
      * @param type       Type of images(PNG:0,JPEG:1) in PDF
     */
-    private static void MakeImagePDF(String fileName, List<BufferedImage> images,int type) {
+    public static void MakeImagePDF(String fileName, List<BufferedImage> images,int type) {
         try (PDDocument imagePDF = new PDDocument()) {
 
             float margin = 10;
@@ -134,7 +134,7 @@ public class ContentExtractionService {
      * @param images     List of BufferedImage 
      * @param type       Type of images(PNG:0,JPEG:1) in PDF
     */
-    private static void SaveImages(String fileName, List<BufferedImage> images,int type)
+    public static void SaveImages(String fileName, List<BufferedImage> images,int type)
     {
         String savePath = null;
         Path directoryPath=null;
