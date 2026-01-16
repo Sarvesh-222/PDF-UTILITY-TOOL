@@ -43,6 +43,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
+import javax.imageio.ImageIO;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -111,9 +112,11 @@ public class PDFUTILITYTOOL extends Application {
                 () -> mainScene.setRoot(createFeaturePage("Extract PDF")));
        
         StackPane cleanupCard = createCard("Clean Up", "Remove unwanted contents", Color.web("#ff66cc"), "convert.png",
-                () -> mainScene.setRoot(createFeaturePage("Clean Up PDF")));
+                () -> mainScene.setRoot(createRemoveBlankPagesWorkspace()));
+        StackPane imagesToPDF = createCard("Images To PDF", "Convert Images into A PDF", Color.web("#ff10cc"), "convert.png",
+                () -> mainScene.setRoot(createFeaturePage("IMAGES TO PDF")));
 
-        HBox cardRow = new HBox(20, mergeCard, splitCard, compressCard, extractCard, cleanupCard);
+        HBox cardRow = new HBox(20, mergeCard, splitCard, compressCard, extractCard, cleanupCard,imagesToPDF);
         cardRow.setAlignment(Pos.CENTER);
 
         VBox root = new VBox(40, title, cardRow);
@@ -145,9 +148,14 @@ public class PDFUTILITYTOOL extends Application {
             options.add("Extract Text");
             options.add("Extract Images");
             break;
-        case "Clean Up PDF":
-            options.add("Remove Blank\nPages");
+            
+        case "IMAGES TO PDF":
+            options.add("PNG To PDF");
+            options.add("JPEG To PDF");
             break;
+//        case "Clean Up PDF":
+//            options.add("Remove Blank\nPages");
+//            break;
     }
 
     // Create cards for each option
@@ -181,6 +189,14 @@ public class PDFUTILITYTOOL extends Application {
                 () -> mainScene.setRoot(createExtractImagesWorkspace()));
 //                optionsCards.add(optionN);
                 break;
+            case "PNG To PDF":
+                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                () -> mainScene.setRoot(createImagesToPDFWorkspace(0)));
+                break;
+            case "JPEG To PDF":
+                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                () -> mainScene.setRoot(createImagesToPDFWorkspace(1)));
+                break;
                 
         }
             optionsCards.add(optionN);
@@ -204,27 +220,6 @@ public class PDFUTILITYTOOL extends Application {
 
     return root;
 }
-
-
-    // --- Step 3: Final Page (Work Page Placeholder) ---
-    private VBox createFinalPage(String optionName) {
-        Label title = new Label(optionName);
-        title.setFont(Font.font("Arial", 28));
-        title.setStyle("-fx-font-weight: bold;");
-
-        Label desc = new Label("This is a placeholder page for " + optionName);
-        desc.setFont(Font.font("Arial", 18));
-
-        Button backBtn = new Button("← MainPage");
-        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage())); // Back to feature page
-
-        VBox root = new VBox(30, title, desc, backBtn);
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(40));
-        root.setStyle("-fx-background-color: #f2f2f2;");
-
-        return root;
-    }
 
     // --- Card Creator ---
     private StackPane createCard(String text, String description, Color color, String iconFileName, Runnable onClick) {
@@ -355,6 +350,45 @@ public class PDFUTILITYTOOL extends Application {
         }
     }
     
+    private void openPngChooser(FlowPane pdfContainer) {
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Select PNG");
+        fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PNG Files", "*.png")
+        );
+
+        File file = fc.showOpenDialog(mainStage);
+        if (file == null) return;
+        addedPdfFiles.add(file);
+        if(isMergePage)updateMergeButtonState();
+        if(isSplitIntoPagesPage || isSplitAtPagesPage || isSplitByRangePage)UpdateSplitPDFButtonState();
+
+        Image preview = new Image(file.toURI().toString());
+        StackPane card = createPdfPreviewCard(preview, 0, file, pdfContainer);
+        pdfContainer.getChildren().add(card);
+
+    }
+    private void openJpegChooser(FlowPane pdfContainer) {
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Select JPEG");
+        fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("JPEG Files", "*.jpeg")
+        );
+
+        File file = fc.showOpenDialog(mainStage);
+        if (file == null) return;
+        addedPdfFiles.add(file);
+        if(isMergePage)updateMergeButtonState();
+        if(isSplitIntoPagesPage || isSplitAtPagesPage || isSplitByRangePage)UpdateSplitPDFButtonState();
+
+        Image preview = new Image(file.toURI().toString());
+        StackPane card = createPdfPreviewCard(preview, 0, file, pdfContainer);
+        pdfContainer.getChildren().add(card);
+
+    }
+    
     private StackPane createAddPdfButton(FlowPane pdfContainer) {
 
         Label plus = new Label("+");
@@ -392,6 +426,87 @@ public class PDFUTILITYTOOL extends Application {
         });
 
         button.setOnMouseClicked(e -> openPdfChooser(pdfContainer));
+
+        return button;
+    }
+    
+    private StackPane createAddPngButton(FlowPane pdfContainer) {
+
+        Label plus = new Label("+");
+        plus.setFont(Font.font(30));
+        plus.setTextFill(Color.WHITE);
+
+        StackPane button = new StackPane(plus);
+        button.setPrefSize(50, 50);
+        button.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-background-radius: 25;
+            -fx-cursor: hand;
+        """);
+
+        DropShadow shadow = new DropShadow(10, Color.gray(0.3));
+        button.setEffect(shadow);
+
+        // --- Hover animation ---
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(120), button);
+        scaleIn.setToX(1.08);
+        scaleIn.setToY(1.08);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(120), button);
+        scaleOut.setToX(1.0);
+        scaleOut.setToY(1.0);
+
+        button.setOnMouseEntered(e -> {
+            shadow.setRadius(16);
+            scaleIn.playFromStart();
+        });
+
+        button.setOnMouseExited(e -> {
+            shadow.setRadius(10);
+            scaleOut.playFromStart();
+        });
+
+        button.setOnMouseClicked(e -> openPngChooser(pdfContainer));
+
+        return button;
+    }
+    private StackPane createAddJpegButton(FlowPane pdfContainer) {
+
+        Label plus = new Label("+");
+        plus.setFont(Font.font(30));
+        plus.setTextFill(Color.WHITE);
+
+        StackPane button = new StackPane(plus);
+        button.setPrefSize(50, 50);
+        button.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-background-radius: 25;
+            -fx-cursor: hand;
+        """);
+
+        DropShadow shadow = new DropShadow(10, Color.gray(0.3));
+        button.setEffect(shadow);
+
+        // --- Hover animation ---
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(120), button);
+        scaleIn.setToX(1.08);
+        scaleIn.setToY(1.08);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(120), button);
+        scaleOut.setToX(1.0);
+        scaleOut.setToY(1.0);
+
+        button.setOnMouseEntered(e -> {
+            shadow.setRadius(16);
+            scaleIn.playFromStart();
+        });
+
+        button.setOnMouseExited(e -> {
+            shadow.setRadius(10);
+            scaleOut.playFromStart();
+        });
+
+        button.setOnMouseClicked(e -> openJpegChooser(pdfContainer));
 
         return button;
     }
@@ -514,7 +629,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         });
 
         // ---------- Right Sidebar ----------
-        VBox rightSidebar = createSplitIntoPagesRightPanel(pdfContainer);
+        VBox rightSidebar = createSplitIntoPagesRightPanel();
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -541,7 +656,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         return root;
     }
     
-    private VBox createSplitIntoPagesRightPanel(FlowPane pdfContainer) {
+    private VBox createSplitIntoPagesRightPanel() {
 
         Label modeLabel = new Label("Split Options");
         modeLabel.setFont(Font.font(16));
@@ -578,6 +693,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
             -fx-font-weight: bold;
             -fx-padding: 10 20;
         """);
+        applyPrimaryButtonHoverEffect(splitBtn);
         
 
        splitBtn.setOnAction(e -> {
@@ -748,6 +864,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
             -fx-font-weight: bold;
             -fx-padding: 10 20;
         """);
+        applyPrimaryButtonHoverEffect(splitBtn);
 
         // Enable logic
         Runnable updateState = () -> {
@@ -820,6 +937,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         -fx-font-weight: bold;
         -fx-padding: 10 25;
     """);
+    applyPrimaryButtonHoverEffect(mergeBtn);
 
     mergeBtn.setOnAction(e -> {
             try {
@@ -949,6 +1067,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
             -fx-font-weight: bold;
             -fx-padding: 10 20;
         """);
+        applyPrimaryButtonHoverEffect(splitBtn);
 
         // Enable split button only when:
         // - one PDF exists
@@ -1072,6 +1191,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         -fx-font-weight: bold;
         -fx-padding: 10 20;
     """);
+    applyPrimaryButtonHoverEffect(compressBtn);
 
     // Enable only when at least one PDF is added
     compressBtn.disableProperty().bind(
@@ -1255,6 +1375,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
             -fx-font-weight: bold;
             -fx-padding: 10 20;
         """);
+        applyPrimaryButtonHoverEffect(extractBtn);
 
         // Enable when at least one PDF exists
         extractBtn.disableProperty().bind(
@@ -1475,6 +1596,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         -fx-font-weight: bold;
         -fx-padding: 10 20;
     """);
+    applyPrimaryButtonHoverEffect(extractBtn);
 
     extractBtn.disableProperty().bind(
         javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
@@ -1533,11 +1655,298 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
     );
 }
 
+    
+    private BorderPane createRemoveBlankPagesWorkspace() {
+
+        // ---------- Title ----------
+        Label title = new Label("Remove Blank Pages");
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        BorderPane topBar = new BorderPane();
+        topBar.setCenter(title);
+        topBar.setPadding(new Insets(10));
+        topBar.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-border-color: #dddddd;
+            -fx-border-width: 0 0 1 0;
+        """);
+
+        // ---------- PDF Cards ----------
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER);
+        pdfContainer.setPadding(new Insets(20));
+
+        ScrollPane scrollPane = new ScrollPane(pdfContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // ---------- Add Button (NO LOCKING) ----------
+        StackPane addButton = createAddPdfButton(pdfContainer);
+
+        // ---------- Right Sidebar ----------
+        VBox rightControls = createRemoveBlankPagesRightSidebar(pdfContainer);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(20, addButton, spacer, rightControls);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(280);
+        sidebar.setAlignment(Pos.TOP_CENTER);
+        sidebar.setStyle("""
+            -fx-background-color: #eaeaea;
+            -fx-border-color: #ccc;
+            -fx-border-width: 0 0 0 1;
+        """);
+
+        // ---------- Center Content ----------
+        HBox centerContent = new HBox(scrollPane, sidebar);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+        // ---------- Root ----------
+        BorderPane root = new BorderPane();
+        root.setTop(topBar);
+        root.setCenter(centerContent);
+        root.setStyle("-fx-background-color: #f2f2f2;");
+
+        return root;
+    }
+    
+    private VBox createRemoveBlankPagesRightSidebar(FlowPane pdfContainer) {
+
+        Label sectionTitle = new Label("Remove Options");
+        sectionTitle.setFont(Font.font(16));
+        sectionTitle.setStyle("-fx-font-weight: bold;");
+
+        Label tip = new Label(
+            "Tip: Pages with no visible text or content will be removed.\n" +
+            "The output PDF will be saved on your Desktop."
+        );
+        tip.setWrapText(true);
+        tip.setStyle("""
+            -fx-font-size: 11;
+            -fx-text-fill: #555;
+        """);
+
+        Button removeBtn = new Button("Remove Blank Pages");
+        removeBtn.setDisable(true);
+        removeBtn.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-text-fill: white;
+            -fx-font-size: 15;
+            -fx-font-weight: bold;
+            -fx-padding: 10 20;
+        """);
+        applyPrimaryButtonHoverEffect(removeBtn);
+
+        // Enable when at least one PDF is added
+        removeBtn.disableProperty().bind(
+            javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
+        );
+
+        removeBtn.setOnAction(e -> {
+            // Placeholder
+            System.out.println("Remove Blank Pages triggered");
+            for(File pdf : addedPdfFiles)
+            {
+                CleanUpService.RemoveBlankPages(pdf);
+            }
+
+            // Example service call placeholder
+            // BlankPageRemovalService.removeBlankPages(addedPdfFiles.getFirst());
+        });
+
+        Button backBtn = new Button("← Back");
+        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+        VBox box = new VBox(
+            12,
+            sectionTitle,
+            tip,
+            removeBtn,
+            backBtn
+        );
+
+        box.setAlignment(Pos.BOTTOM_LEFT);
+        return box;
+    }
+
+    
+    private BorderPane createImagesToPDFWorkspace(int frmt) {
+
+        // ---------- Title ----------
+        Label title;
+        if(frmt == 0)
+        {
+            title = new Label("PNG TO PDF");
+        }else
+        {
+            title = new Label("JPEG TO PDF");
+        }
+         
+        title.setFont(Font.font("Arial", 28));
+        title.setStyle("-fx-font-weight: bold;");
+
+        BorderPane topBar = new BorderPane();
+        topBar.setCenter(title);
+        topBar.setPadding(new Insets(10));
+        topBar.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-border-color: #dddddd;
+            -fx-border-width: 0 0 1 0;
+        """);
+
+        // ---------- PDF Cards ----------
+        FlowPane pdfContainer = new FlowPane(20, 20);
+        pdfContainer.setAlignment(Pos.CENTER);
+        pdfContainer.setPadding(new Insets(20));
+
+        ScrollPane scrollPane = new ScrollPane(pdfContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // ---------- Add Button (NO LOCKING) ----------
+        StackPane addButton;
+        if(frmt == 0) addButton = createAddPngButton(pdfContainer);
+        else addButton = createAddJpegButton(pdfContainer);
+        
+
+        // ---------- Right Sidebar ----------
+        VBox rightControls = createImagesToPDFRightSidebar(pdfContainer,frmt);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(20, addButton, spacer, rightControls);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(280);
+        sidebar.setAlignment(Pos.TOP_CENTER);
+        sidebar.setStyle("""
+            -fx-background-color: #eaeaea;
+            -fx-border-color: #ccc;
+            -fx-border-width: 0 0 0 1;
+        """);
+
+        // ---------- Center Content ----------
+        HBox centerContent = new HBox(scrollPane, sidebar);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+
+        // ---------- Root ----------
+        BorderPane root = new BorderPane();
+        root.setTop(topBar);
+        root.setCenter(centerContent);
+        root.setStyle("-fx-background-color: #f2f2f2;");
+
+        return root;
+    }
+    
+    private VBox createImagesToPDFRightSidebar(FlowPane pdfContainer, int frmt) {
+
+        Label sectionTitle;
+        if(frmt == 0)
+        {
+            sectionTitle = new Label("PNG To PDF Options");
+        }else
+        {
+            sectionTitle = new Label("JPEG To PDF Options");
+        }
+        sectionTitle.setFont(Font.font(16));
+        sectionTitle.setStyle("-fx-font-weight: bold;");
+
+        Label tip = new Label(
+            "Tip: All selected Images will be put into\n" +
+            "a single output PDF that will be saved on your Desktop."
+        );
+        tip.setWrapText(true);
+        tip.setStyle("""
+            -fx-font-size: 11;
+            -fx-text-fill: #555;
+        """);
+
+        Button createPDFBtn = new Button("Create PDF");
+        createPDFBtn.setDisable(true);
+        createPDFBtn.setStyle("""
+            -fx-background-color: #ff4d4d;
+            -fx-text-fill: white;
+            -fx-font-size: 15;
+            -fx-font-weight: bold;
+            -fx-padding: 10 20;
+        """);
+        applyPrimaryButtonHoverEffect(createPDFBtn);
+
+        // Enable when at least one PDF is added
+        createPDFBtn.disableProperty().bind(
+            javafx.beans.binding.Bindings.isEmpty(pdfContainer.getChildren())
+        );
+
+        createPDFBtn.setOnAction(e -> {
+            // Placeholder
+//            System.out.println("Remove Blank Pages triggered");
+            if(frmt ==0)
+            {
+                ImageToPDFService.ImageToPDF(addedPdfFiles, "ImagesPDF", 0);
+            }else
+            {
+                ImageToPDFService.ImageToPDF(addedPdfFiles, "ImagesPDF", 1);   
+            }
+
+            // Example service call placeholder
+            // BlankPageRemovalService.removeBlankPages(addedPdfFiles.getFirst());
+        });
+
+        Button backBtn = new Button("← Back");
+        backBtn.setOnAction(e -> mainScene.setRoot(createHomePage()));
+
+        VBox box = new VBox(
+            12,
+            sectionTitle,
+            tip,
+            createPDFBtn,
+            backBtn
+        );
+
+        box.setAlignment(Pos.BOTTOM_LEFT);
+        return box;
+    }
+
+    
     public static String getFileNameWithoutExtension(File file) {
         String name = file.getName();
         int lastDot = name.lastIndexOf('.');
         return (lastDot == -1) ? name : name.substring(0, lastDot);
     }
+    
+    private void applyPrimaryButtonHoverEffect(Button button) {
+
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), button);
+        scaleIn.setToX(1.05);
+        scaleIn.setToY(1.05);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), button);
+        scaleOut.setToX(1.0);
+        scaleOut.setToY(1.0);
+
+        DropShadow hoverShadow = new DropShadow(15, Color.gray(0.4));
+        DropShadow normalShadow = new DropShadow(8, Color.gray(0.3));
+
+        button.setEffect(normalShadow);
+
+        button.setOnMouseEntered(e -> {
+            scaleOut.stop();
+            scaleIn.playFromStart();
+            button.setEffect(hoverShadow);
+        });
+
+        button.setOnMouseExited(e -> {
+            scaleIn.stop();
+            scaleOut.playFromStart();
+            button.setEffect(normalShadow);
+        });
+    }
+
 
 
 
