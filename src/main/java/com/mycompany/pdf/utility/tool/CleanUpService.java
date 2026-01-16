@@ -6,22 +6,18 @@ package com.mycompany.pdf.utility.tool;
 
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import java.awt.image.BufferedImage;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.PDPageTree;
+
 import org.apache.pdfbox.text.PDFTextStripper;
 
 
-import org.apache.pdfbox.pdfparser.PDFStreamParser;
+
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
