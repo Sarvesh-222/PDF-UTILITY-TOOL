@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javafx.scene.control.Alert;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -69,6 +70,15 @@ public class CleanUpService {
             
             newDoc.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_NoBlankPages" +".pdf").toFile());
             newDoc.close();
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Clean-Up Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("PDF without Blank Pages created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
+            
+            
             
         }catch(IOException e)
         {

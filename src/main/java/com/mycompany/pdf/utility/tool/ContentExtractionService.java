@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.scene.control.Alert;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -120,6 +121,13 @@ public class ContentExtractionService {
             Files.createDirectories(directoryPath);
 
             imagePDF.save(directoryPath.resolve(fileName + "_ExtractedImages.pdf").toFile());
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Image Extraction Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Extracted Image PDF created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
 
         } catch (IOException e) {
             System.getLogger(ContentExtractionService.class.getName())
@@ -163,6 +171,13 @@ public class ContentExtractionService {
             }
             imgNo++;
         }
+        
+        // SUCCESS POPUP
+        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+        successAlert.setTitle("Image Extraction Complete");
+        successAlert.setHeaderText(null);
+        successAlert.setContentText("All images are saved at:\n" + directoryPath.toString() );
+        successAlert.showAndWait();
     }
     
         public static void ExtractTextPageWise(
@@ -207,6 +222,13 @@ public class ContentExtractionService {
                         pdfFile.getName() + "_ExtractedText(PageWise).pdf");
                 textPDF.save(outPath.toFile());
                 textPDF.close();
+                
+                // SUCCESS POPUP
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Text Extraction Complete");
+                successAlert.setHeaderText(null);
+                successAlert.setContentText("All text pages are saved at:\n" + directoryPath.toString() );
+                successAlert.showAndWait();
 
             } else {
                 // ---------------- Multiple Files ----------------
@@ -240,6 +262,13 @@ public class ContentExtractionService {
                         singlePDF.close();
                     }
                 }
+                
+                // SUCCESS POPUP
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Text Extraction Complete");
+                successAlert.setHeaderText(null);
+                successAlert.setContentText("All text files are saved at:\n" + directoryPath.toString() );
+                successAlert.showAndWait();
             }
 
         } catch (IOException ex) {

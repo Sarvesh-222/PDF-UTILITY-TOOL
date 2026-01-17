@@ -32,18 +32,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
+
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.CornerRadii;
+
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
-import javax.imageio.ImageIO;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -84,48 +81,108 @@ public class PDFUTILITYTOOL extends Application {
 
     // --- Step 1: Home Page (Feature Categories) ---
     private VBox createHomePage() {
+
         addedPdfFiles.clear();
-        isMergePage=false;
+        isMergePage = false;
         isSplitIntoPagesPage = false;
         isSplitAtPagesPage = false;
-        isSplitByRangePage=false;
+        isSplitByRangePage = false;
+
+        // ---------- Title ----------
         Label title = new Label("I Heart PDF Too :)");
-        title.setFont(Font.font("Arial", 28));
-        title.setStyle("-fx-font-weight: bold;");
+        title.setFont(Font.font("Arial", 32));
+        title.setStyle("""
+            -fx-font-weight: bold;
+            -fx-text-fill: #222;
+        """);
 
-//        StackPane mergeCard = createCard("Merge PDF", "Combine multiple PDFs", Color.web("#ff4d4d"), "merge.png",
-//                () -> mainScene.setRoot(createFeaturePage("Merge PDF")));
+        Label subtitle = new Label("Simple • Fast • Offline PDF Utilities");
+        subtitle.setStyle("""
+            -fx-font-size: 14;
+            -fx-text-fill: #666;
+        """);
+
+        VBox header = new VBox(6, title, subtitle);
+        header.setAlignment(Pos.CENTER);
+
+        // ---------- Feature Cards ----------
         StackPane mergeCard = createCard(
-        "Merge PDF",
-        "Combine multiple PDFs",
-        Color.web("#ff4d4d"),
-        "merge.png",
-        () -> mainScene.setRoot(createMergeWorkspace())
+            "Merge PDF",
+            "Combine multiple PDFs",
+            Color.web("#ff4d4d"),
+            "merge.png",
+            () -> mainScene.setRoot(createMergeWorkspace())
         );
-        StackPane splitCard = createCard("Split PDF", "Split PDFs into parts", Color.web("#ff9933"), "split.png",
-                () -> mainScene.setRoot(createFeaturePage("Split PDF")));
-       
-        StackPane compressCard = createCard("Compress PDF", "Reduce PDF size", Color.web("#33cc33"), "compress.png",
-                () -> mainScene.setRoot(createCompressWorkspace()));
-        
-        StackPane extractCard = createCard("Extract", "Extract contents", Color.web("#3399ff"), "convert.png",
-                () -> mainScene.setRoot(createFeaturePage("Extract PDF")));
-       
-        StackPane cleanupCard = createCard("Clean Up", "Remove unwanted contents", Color.web("#ff66cc"), "convert.png",
-                () -> mainScene.setRoot(createRemoveBlankPagesWorkspace()));
-        StackPane imagesToPDF = createCard("Images To PDF", "Convert Images into A PDF", Color.web("#ff10cc"), "convert.png",
-                () -> mainScene.setRoot(createFeaturePage("IMAGES TO PDF")));
 
-        HBox cardRow = new HBox(20, mergeCard, splitCard, compressCard, extractCard, cleanupCard,imagesToPDF);
-        cardRow.setAlignment(Pos.CENTER);
+        StackPane splitCard = createCard(
+            "Split PDF",
+            "Split PDFs into parts",
+            Color.web("#ff9933"),
+            "split.png",
+            () -> mainScene.setRoot(createFeaturePage("Split PDF"))
+        );
 
-        VBox root = new VBox(40, title, cardRow);
+        StackPane compressCard = createCard(
+            "Compress PDF",
+            "Reduce PDF size",
+            Color.web("#33cc33"),
+            "compress.png",
+            () -> mainScene.setRoot(createCompressWorkspace())
+        );
+
+        StackPane extractCard = createCard(
+            "Extract",
+            "Extract contents",
+            Color.web("#3399ff"),
+            "extract.png",
+            () -> mainScene.setRoot(createFeaturePage("Extract PDF"))
+        );
+
+        StackPane removeBlankPagesCard = createCard(
+            "Remove Blank Pages",
+            "Remove unwanted contents",
+            Color.web("#ff66cc"),
+            "rbp.png",
+            () -> mainScene.setRoot(createRemoveBlankPagesWorkspace())
+        );
+
+        StackPane imagesToPDF = createCard(
+            "Images To PDF",
+            "Convert Images into a PDF",
+            Color.web("#aa66ff"),
+            "imageToPDF.png",
+            () -> mainScene.setRoot(createFeaturePage("IMAGES TO PDF"))
+        );
+
+        // ---------- Card Grid ----------
+        GridPane cardGrid = new GridPane();
+        cardGrid.setHgap(30);
+        cardGrid.setVgap(30);
+        cardGrid.setAlignment(Pos.CENTER);
+
+        cardGrid.add(mergeCard, 0, 0);
+        cardGrid.add(splitCard, 1, 0);
+        cardGrid.add(compressCard, 2, 0);
+
+        cardGrid.add(extractCard, 0, 1);
+        cardGrid.add(removeBlankPagesCard, 1, 1);
+        cardGrid.add(imagesToPDF, 2, 1);
+
+        // ---------- Root ----------
+        VBox root = new VBox(50, header, cardGrid);
         root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(40));
-        root.setStyle("-fx-background-color: #f2f2f2;");
+        root.setPadding(new Insets(50));
+        root.setStyle("""
+            -fx-background-color: linear-gradient(
+                from 0% 0% to 0% 100%,
+                #f7f7f7,
+                #eeeeee
+            );
+        """);
 
         return root;
     }
+
 
     // --- Step 2: Feature Page (All options under a feature) ---
     private VBox createFeaturePage(String featureName) {

@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import javafx.scene.control.Alert;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -28,53 +29,114 @@ public class ImageToPDFService {
     
     private static String desktopAddress=System.getProperty("user.home") + File.separator + "Desktop";
     
-    public static void ImageToPDF(List<File> imageFiles, String outputFileName,int inputFormat)
-    {
-        try(PDDocument doc = new PDDocument())
-        {
-            for(File imageFile : imageFiles)
-            {
-                BufferedImage bimage = ImageIO.read(imageFile);
-                if(bimage==null) continue;
-                
-                PDPage page = new PDPage(new PDRectangle(bimage.getWidth(), bimage.getHeight()));
-                doc.addPage(page);
-                
-                PDImageXObject pdImage = null;
-                switch(inputFormat)
-                {
-                    case 0 -> pdImage = LosslessFactory.createFromImage(doc, bimage);
-                    case 1 -> pdImage = JPEGFactory.createFromImage(doc, bimage,0.75f);
-                }
-                
-                
-//                PDImageXObject pdIdage = JPEGFactory.createFromImage(doc, bimage,0.75f);
-                try (PDPageContentStream contentStream = new PDPageContentStream(doc, page)) 
-                {
-                    contentStream.drawImage(pdImage, 0, 0,bimage.getWidth(),bimage.getHeight());
-                }
-                
-            }
-            
-            Path directoryPath = null;
-            switch(inputFormat)
-            {
-                case 0 -> directoryPath = Paths.get(desktopAddress,"PNG_PDF");
-                case 1 -> directoryPath = Paths.get(desktopAddress,"JPEG_PDF");
-            }
-             
-            if (Files.notExists(directoryPath)) 
-            {
-                Files.createDirectory(directoryPath);
-            }
-            
-            doc.save(Paths.get(directoryPath.toString(), outputFileName +".pdf").toFile());
-            doc.close();
-            
+    public static void ImageToPDF(
+        List<File> imageFiles,
+        String outputFileName,
+        int inputFormat
+) {
 
-        }catch(IOException ex)
-        {
+    float margin = 50;
+    float spacing = 15;
+
+    try (PDDocument doc = new PDDocument()) {
+
+        PDPage page = new PDPage(PDRectangle.A4);
+        doc.addPage(page);
+
+        PDRectangle pageSize = page.getMediaBox();
+        float pageWidth  = pageSize.getWidth();
+        float pageHeight = pageSize.getHeight();
+
+        float currentY = pageHeight - margin;
+
+        PDPageContentStream contentStream =
+                new PDPageContentStream(doc, page);
+
+        for (File imageFile : imageFiles) {
+
+            BufferedImage bufferedImage = ImageIO.read(imageFile);
+            if (bufferedImage == null) continue;
+
+            PDImageXObject pdImage = switch (inputFormat) {
+                case 1 -> JPEGFactory.createFromImage(doc, bufferedImage, 0.75f);
+                default -> LosslessFactory.createFromImage(doc, bufferedImage);
+            };
+
+            float imgWidth  = pdImage.getWidth();
+            float imgHeight = pdImage.getHeight();
             
+            
+            float maxWidth = pageWidth - 2 * margin;
+
+            // If not enough vertical space at all, start a new page FIRST
+            if (currentY <= margin) {
+                contentStream.close();
+
+                page = new PDPage(PDRectangle.A4);
+                doc.addPage(page);
+
+                contentStream = new PDPageContentStream(doc, page);
+                currentY = pageHeight - margin;
+            }
+
+            // Now maxHeight is guaranteed positive
+            float maxHeight = currentY - margin;
+
+            float scale = Math.min(
+                    maxWidth / imgWidth,
+                    maxHeight / imgHeight
+            );
+
+            // Prevent upscaling
+            scale = Math.min(scale, 1.0f);
+
+            float drawWidth  = imgWidth  * scale;
+            float drawHeight = imgHeight * scale;
+
+
+            // New page if needed
+            if (currentY - drawHeight < margin) {
+                contentStream.close();
+
+                page = new PDPage(PDRectangle.A4);
+                doc.addPage(page);
+
+                contentStream = new PDPageContentStream(doc, page);
+                currentY = pageHeight - margin;
+            }
+
+            contentStream.drawImage(
+                    pdImage,
+                    margin,
+                    currentY - drawHeight,
+                    drawWidth,
+                    drawHeight
+            );
+
+            currentY -= drawHeight + spacing;
         }
+
+        contentStream.close();
+
+        Path directoryPath = switch (inputFormat) {
+            case 1 -> Paths.get(desktopAddress, "JPEG_PDF");
+            default -> Paths.get(desktopAddress, "PNG_PDF");
+        };
+
+        Files.createDirectories(directoryPath);
+
+        doc.save(directoryPath.resolve(outputFileName + ".pdf").toFile());
+        
+        // SUCCESS POPUP
+        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+        successAlert.setTitle("PDF Generation Complete");
+        successAlert.setHeaderText(null);
+        successAlert.setContentText("Images PDF is created at:\n" + directoryPath.toString() );
+        successAlert.showAndWait();
+
+    } catch (IOException ex) {
+        ex.printStackTrace(); // NEVER swallow exceptions
     }
+}
+
 }

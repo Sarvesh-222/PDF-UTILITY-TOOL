@@ -12,6 +12,7 @@ import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javafx.scene.control.Alert;
 /**
  *
  * @author swast
@@ -70,6 +71,13 @@ public class SplitService {
                 pageDoc.close();
                 pgNo++;
             }
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Splitted Pages successfully created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
 //            pages=null;
         }catch(IOException e)
         {
@@ -106,6 +114,14 @@ public class SplitService {
                 pdfDoc.close();
                 partNo++;
             }  
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Splitted PDFs successfully created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
+            
         }catch(IOException e)
         {
             System.out.println("Exception from SplitService.SplitSplitPDFAtPage: "+ e.getMessage());
@@ -137,6 +153,13 @@ public class SplitService {
             
             splittedPDF.get(0).save(Paths.get(directoryPath.toString(),"Page"+startPageNumber+ "-"+ endPageNumber +".pdf").toFile());
             
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Splitted PDF successfully created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
+            
         }catch(IOException e)
         {
             System.out.println("Exception from SplitService.SplitFromTo: "+ e.getMessage());
@@ -166,6 +189,13 @@ public class SplitService {
             }
             oddPagesPDF.save(Paths.get(directoryPath.toString(),"All_OddPages"+".pdf").toFile());
             oddPagesPDF.close();
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Odd Pages created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
             
             
         }catch(IOException e)
@@ -198,6 +228,12 @@ public class SplitService {
             oddPagesPDF.save(Paths.get(directoryPath.toString(),"All_EvenPages"+".pdf").toFile());
             oddPagesPDF.close();
             
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Even Pages created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
             
         }catch(IOException e)
         {
@@ -236,6 +272,13 @@ public class SplitService {
             selectedPagesPDF.save(Paths.get(directoryPath.toString(),"SelectedPages"+".pdf").toFile());
             selectedPagesPDF.close();
             
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Pages: "+ pages +" created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
+            
             
         }catch(IOException e)
         {
@@ -267,6 +310,12 @@ public class SplitService {
             
             pages.get(0).save(Paths.get(directoryPath.toString(),"First_Page"+ ".pdf").toFile());
             
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("First Page PDF created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
             
         }catch (IOException e) {
             System.getLogger("Exception from SplitService.ExtractFirstPage: "+ e.getMessage());
@@ -294,6 +343,12 @@ public class SplitService {
             
             pages.get(0).save(Paths.get(directoryPath.toString(),"Last_Page"+ ".pdf").toFile());
             
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Split Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Last Page PDF created at:\n" + directoryPath.toString() );
+            successAlert.showAndWait();
             
         }catch (IOException e) {
             System.getLogger("Exception from SplitService.ExtractFirstPage: "+ e.getMessage());

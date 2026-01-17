@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javafx.scene.control.Alert;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -77,6 +78,14 @@ public class CompressService {
             }
             
             doc.save(Paths.get(directoryPath.toString(), pdfFile.getName()+"_Compressed" +".pdf").toFile());
+            
+            // SUCCESS POPUP
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Compress Complete");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Compressed PDF successfully created at:\n" + desktopAddress +File.separator+ pdfFile.getName()+"_Compressed" +".pdf");
+            successAlert.showAndWait();
+            
         }catch(IOException ex)
         {
             System.getLogger(ContentExtractionService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
