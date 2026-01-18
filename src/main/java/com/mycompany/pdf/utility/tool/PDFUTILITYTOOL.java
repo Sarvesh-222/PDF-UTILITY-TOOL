@@ -72,10 +72,18 @@ public class PDFUTILITYTOOL extends Application {
         this.mainStage = stage;
 
         VBox mainRoot = createHomePage();
-        mainScene = new Scene(mainRoot, 1000, 500);
+        mainScene = new Scene(mainRoot, 1280, 800);
 
         stage.setScene(mainScene);
-        stage.setTitle("PDF Utility Tool");
+        stage.setTitle("PDF Craft");
+        
+        Image icon = new Image(getClass().getResourceAsStream("/appLogo.png"));
+        stage.getIcons().add(icon);
+        
+        // ---------- Set minimum dimensions ----------
+        stage.setMinWidth(1024);   // minimum width in pixels
+        stage.setMinHeight(600);   // minimum height in pixels
+       
         stage.show();
     }
 
@@ -88,22 +96,21 @@ public class PDFUTILITYTOOL extends Application {
         isSplitAtPagesPage = false;
         isSplitByRangePage = false;
 
-        // ---------- Title ----------
-        Label title = new Label("I Heart PDF Too :)");
-        title.setFont(Font.font("Arial", 32));
-        title.setStyle("""
-            -fx-font-weight: bold;
-            -fx-text-fill: #222;
-        """);
+        // ---------- Logo Image ----------
+        Image logoImage = new Image(getClass().getResourceAsStream("/appLogoTitleScreen.png")); 
+        ImageView logoView = new ImageView(logoImage);
+//        System.out.println();
 
-        Label subtitle = new Label("Simple • Fast • Offline PDF Utilities");
-        subtitle.setStyle("""
-            -fx-font-size: 14;
-            -fx-text-fill: #666;
-        """);
-
-        VBox header = new VBox(6, title, subtitle);
+        // Optional: resize logo to fit nicely
+        logoView.setFitWidth(800);  // adjust width as needed
+        logoView.setFitHeight(300);  // adjust width as needed
+        logoView.setPreserveRatio(true);
+        logoView.setSmooth(true);
+        
+        // VBox to stack logo
+        VBox header = new VBox(logoView);
         header.setAlignment(Pos.CENTER);
+
 
         // ---------- Feature Cards ----------
         StackPane mergeCard = createCard(
@@ -149,7 +156,7 @@ public class PDFUTILITYTOOL extends Application {
         StackPane imagesToPDF = createCard(
             "Images To PDF",
             "Convert Images into a PDF",
-            Color.web("#aa66ff"),
+            Color.web("#aa049f"),
             "imageToPDF.png",
             () -> mainScene.setRoot(createFeaturePage("IMAGES TO PDF"))
         );
@@ -169,9 +176,9 @@ public class PDFUTILITYTOOL extends Application {
         cardGrid.add(imagesToPDF, 2, 1);
 
         // ---------- Root ----------
-        VBox root = new VBox(50, header, cardGrid);
+        VBox root = new VBox(1, header, cardGrid);
         root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(50));
+//        root.setPadding(new Insets(10));
         root.setStyle("""
             -fx-background-color: linear-gradient(
                 from 0% 0% to 0% 100%,
@@ -222,36 +229,36 @@ public class PDFUTILITYTOOL extends Application {
         switch(optionName)
         {
             case "Split PDF Into Pages":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Splits given PDF into pages", Color.web("#ff9933"), "splitIntoPages.jpg",
                 () -> mainScene.setRoot(createSplitIntoPagesWorkspace()));
 //                 optionsCards.add(optionN);
                 break;
             case "Split PDF At A Page":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Splits given PDF at given page Number", Color.web("#ff9933"), "splitAtPage.png",
                 () -> mainScene.setRoot(createSplitAtPageWorkspace()));
 //                optionsCards.add(optionN);
                 break;
             case "Split PDF By Range":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Splits given PDF in a given Range", Color.web("#ff9933"), "splitRange.png",
                 () -> mainScene.setRoot(createSplitByRangeWorkspace()));
 //                optionsCards.add(optionN);
                 break;
             case "Extract Text":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Extracts text from given PDF", Color.web("#3399ff"), "extractText.png",
                 () -> mainScene.setRoot(createExtractTextWorkspace()));
 //                optionsCards.add(optionN);
                 break;
             case "Extract Images":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Extracts images from given PDF", Color.web("#3399ff"), "extractImages.png",
                 () -> mainScene.setRoot(createExtractImagesWorkspace()));
 //                optionsCards.add(optionN);
                 break;
             case "PNG To PDF":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Places given PNGs in a PDF", Color.web("#aa049f"), "pngToPDF.png",
                 () -> mainScene.setRoot(createImagesToPDFWorkspace(0)));
                 break;
             case "JPEG To PDF":
-                optionN = createCard(optionName, "", Color.web("#ff6666"), "merge.png",
+                optionN = createCard(optionName, "Places given JPEGs in a PDF", Color.web("#aa049f"), "jpegToPDF.png",
                 () -> mainScene.setRoot(createImagesToPDFWorkspace(1)));
                 break;
                 
@@ -1101,12 +1108,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         pageField.setPromptText("e.g. 3");
         pageField.setMaxWidth(120);
 
-        // Numeric input only
-        pageField.textProperty().addListener((obs, old, val) -> {
-            if (!val.matches("\\d*")) {
-                pageField.setText(val.replaceAll("[^\\d]", ""));
-            }
-        });
+        enforceNumeric(pageField);
 
         Label tip = new Label("Tip: Page number is inclusive");
         tip.setWrapText(true);
@@ -1415,7 +1417,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
         });
 
         Label tip = new Label(
-            "Tip: Extracted text will be saved on your Desktop."
+            "Tip: Extracted text files will be saved on your Desktop."
         );
         tip.setWrapText(true);
         tip.setStyle("""
@@ -1632,7 +1634,7 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
        ===================================================== */
 
     Label tip = new Label(
-        "Tip: Extracted images will be saved on your Desktop."
+        "Tip: Extracted images file will be saved on your Desktop."
     );
     tip.setWrapText(true);
     tip.setStyle("""
@@ -2012,12 +2014,21 @@ createMergePDFRightSideControls(pdfContainer, outputField) // bottom
     
     
     private void enforceNumeric(TextField field) {
-        field.textProperty().addListener((obs, old, val) -> {
-            if (!val.matches("\\d*")) {
-                field.setText(val.replaceAll("[^\\d]", ""));
-            }
-        });
-    }
+    field.textProperty().addListener((obs, old, val) -> {
+
+        // Remove non-digits
+        if (!val.matches("\\d*")) {
+            val = val.replaceAll("[^\\d]", "");
+        }
+
+        // Prevent 0
+        if (val.equals("0")) {
+            val = "";
+        }
+
+        field.setText(val);
+    });
+}
 
     
     private void updateMergeButtonState() {
