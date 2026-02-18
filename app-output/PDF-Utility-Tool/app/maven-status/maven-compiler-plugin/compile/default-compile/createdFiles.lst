@@ -1,0 +1,10 @@
+com\mycompany\pdf\utility\tool\CompressService.class
+com\mycompany\pdf\utility\tool\SplitService.class
+com\mycompany\pdf\utility\tool\CleanUpService.class
+com\mycompany\pdf\utility\tool\TextWrapper.class
+com\mycompany\pdf\utility\tool\PDFUTILITYTOOL$SplitMode.class
+com\mycompany\pdf\utility\tool\ImageToPDFService.class
+com\mycompany\pdf\utility\tool\MergeService.class
+com\mycompany\pdf\utility\tool\TextWriter.class
+com\mycompany\pdf\utility\tool\PDFUTILITYTOOL.class
+com\mycompany\pdf\utility\tool\ContentExtractionService.class
